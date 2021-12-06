@@ -70,16 +70,7 @@ def cartoonize():
                 
                 cartoonized_img_name = os.path.join(app.config['CARTOONIZED_FOLDER'], img_name + ".jpg")
                 cv2.imwrite(cartoonized_img_name, cv2.cvtColor(cartoon_image, cv2.COLOR_RGB2BGR))
-                
-                if not opts["run_local"]:
-                    # Upload to bucket
-                    output_uri = upload_blob("cartoonized_images", cartoonized_img_name, img_name + ".jpg", content_type='image/jpg')
-
-                    # Delete locally stored cartoonized image
-                    os.system("rm " + cartoonized_img_name)
-                    cartoonized_img_name = generate_signed_url(output_uri)
                     
-
                 return render_template("index_cartoonized.html", cartoonized_image=cartoonized_img_name)
 
             if flask.request.files.get('video'):
@@ -123,21 +114,11 @@ def cartoonize():
                 audio_file_path = os.path.join(app.config['UPLOAD_FOLDER_VIDEOS'], filename.split(".")[0] + "_audio_modified.mp4")
                 os.system("ffmpeg -hide_banner -loglevel warning -i '{}' -map 0:1 -vn -acodec copy -strict -2  '{}'".format(os.path.abspath(modified_video_path), os.path.abspath(audio_file_path)))
 
-                if opts["run_local"]:
-                    cartoon_video_path = wb_cartoonizer.process_video(modified_video_path, output_frame_rate)
-                else:
-                    data_uri = upload_blob("processed_videos_cartoonize", modified_video_path, filename, content_type='video/mp4', algo_unique_key='cartoonizeinput')
-                    response = api_request(data_uri)
-                    # Delete the processed video from Cloud storage
-                    delete_blob("processed_videos_cartoonize", filename)
-                    cartoon_video_path = download_video('cartoonized_videos', os.path.basename(response['output_uri']), os.path.join(app.config['UPLOAD_FOLDER_VIDEOS'], filename.split(".")[0] + "_cartoon.mp4"))
-                
+                cartoon_video_path = wb_cartoonizer.process_video(modified_video_path, output_frame_rate)
+               
                 ## Add audio to the cartoonized video
                 final_cartoon_video_path = os.path.join(app.config['UPLOAD_FOLDER_VIDEOS'], filename.split(".")[0] + "_cartoon_audio.mp4")
                 os.system("ffmpeg -hide_banner -loglevel warning -i '{}' -i '{}' -codec copy -shortest '{}'".format(os.path.abspath(cartoon_video_path), os.path.abspath(audio_file_path), os.path.abspath(final_cartoon_video_path)))
-
-                # Delete the videos from local disk
-                os.system("rm {} {} {} {}".format(original_video_path, modified_video_path, audio_file_path, cartoon_video_path))
 
                 return render_template("index_cartoonized.html", cartoonized_video=final_cartoon_video_path)
         
