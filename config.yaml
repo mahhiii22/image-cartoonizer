@@ -1,5 +1,4 @@
 ---
-run_local: true # true if you are running locally
 gpu: true # true if you want to use the GPU
 trim-video: true # false if you want to process full video
 trim-video-length: 15 #Max number of seconds you want to trim the video from start
