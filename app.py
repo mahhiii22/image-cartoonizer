@@ -18,19 +18,7 @@ import numpy as np
 import skvideo.io
 if opts['colab-mode']:
     from flask_ngrok import run_with_ngrok #to run the application on colab using ngrok
-
-
 from cartoonize import WB_Cartoonize
-
-if not opts['run_local']:
-    if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
-        from gcloud_utils import upload_blob, generate_signed_url, delete_blob, download_video
-    else:
-        raise Exception("GOOGLE_APPLICATION_CREDENTIALS not set in environment variables")
-    from video_api import api_request
-    # Algorithmia (GPU inference)
-    import Algorithmia
-
 app = Flask(__name__)
 if opts['colab-mode']:
     run_with_ngrok(app)   #starts ngrok when the app is run
@@ -116,16 +104,6 @@ def cartoonize():
                     output_frame_rate = opts['output_frame_rate']    
 
                 output_frame_rate_number = int(output_frame_rate.split('/')[0])
-
-                #change the size if you want higher resolution :
-                ############################
-                # Recommnded width_resize  #
-                ############################
-                #width_resize = 1920 for 1080p: 1920x1080.
-                #width_resize = 1280 for 720p: 1280x720.
-                #width_resize = 854 for 480p: 854x480.
-                #width_resize = 640 for 360p: 640x360.
-                #width_resize = 426 for 240p: 426x240.
                 width_resize=opts['resize-dim']
 
                 # Slice, Resize and Convert Video as per settings
@@ -171,8 +149,5 @@ def cartoonize():
         return render_template("index_cartoonized.html")
 
 if __name__ == "__main__":
-    # Commemnt the below line to run the Appication on Google Colab using ngrok
     if opts['colab-mode']:
         app.run()
-    else:
-        app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
